@@ -78,7 +78,7 @@ def getXY(filelist):
 
     return X, Y
 
-print('--- 2d Histogram Plotting Program ---')
+print('--- 2D Histogram Plotting Program ---')
 X_vals, Y_vals, total = getXY(files)
 print("Done. Plotting...")
 my_cmap = copy.copy(plt.cm.get_cmap("jet"))

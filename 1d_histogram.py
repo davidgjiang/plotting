@@ -30,49 +30,47 @@ def getANGLES(filelist):
             table[k] = table_temp[k]
               
         print('Starting selection')
-        
-        for event in range(10): #range(len(table['TargetScoringPlaneHits_v12.z_'])):
 
-            #if (event % 10000 == 0):
-            #    print('Finished loading event number ' + str(event))
-
-            #if (event == 10000):    
-            #    break
+        for event in range(len(table['TargetScoringPlaneHits_v12.z_'])):
             
-            for hit in range(10): #range(len(table['TargetScoringPlaneHits_v12.z_'][event])):
+            for hit in range(len(table['TargetScoringPlaneHits_v12.z_'][event])):
                 
                 if (table['TargetScoringPlaneHits_v12.z_'][event][hit] > -1.7535 and \
                 table['TargetScoringPlaneHits_v12.z_'][event][hit] < 1.7535 and \
                 table['TargetScoringPlaneHits_v12.trackID_'][event][hit] == 1 and \
                 table['TargetScoringPlaneHits_v12.pdgID_'][event][hit] == 11):
                     
-                    # Calculate recoil angle (in degrees)
+                    # Position and Momentum values
                     X = table['TargetScoringPlaneHits_v12.x_'][event][hit]
                     Y = table['TargetScoringPlaneHits_v12.y_'][event][hit]
                     Z = table['TargetScoringPlaneHits_v12.z_'][event][hit]
                     pX = table['TargetScoringPlaneHits_v12.px_'][event][hit]
                     pY = table['TargetScoringPlaneHits_v12.py_'][event][hit]
                     pZ = table['TargetScoringPlaneHits_v12.pz_'][event][hit]
-                    costheta = (np.sqrt(pX**2 + pY**2 + pZ**2) / pZ) * (180/3.1415926)
-                    #Angles.append(theta)
-                    print('event: ' + str(event))
-                    print('X: ' + str(X))
-                    print('Y: ' + str(Y))
-                    print('Z: ' + str(Z))
-                    print('pX: ' + str(pX))
-                    print('pY: ' + str(pY))
-                    print('pZ: ' + str(pZ))
-                    print('cos(theta): ' + str(costheta))
-                    print()
+                    
+                    # Calculate recoil angle (in degrees)
+                    theta = np.arccos(pZ / np.sqrt(pX**2 + pY**2 + pZ**2)) * 180 / np.pi
+                    Angles.append(theta)
                     break
     
-    #return Angles
+            if (event % 10000 == 0):
+                print('Finished loading event number ' + str(event))
+
+    return Angles
     
 
     print('Finished selection')   
 
-
-getANGLES(files)
+print('--- 1D Histogram Plotting Program ---')
+values = getANGLES(files)
+big = []
+for val in values:
+    if val > 1.0:
+        big.append(val)
+print('angles > 1.0 deg: ' + str(big))
+print('amount: ' + str(len(big)))
+    
+#print(values)
 
 '''
 bin_list = list(range(-30,31))
