@@ -58,6 +58,7 @@ def getXY(filelist):
     
     X = [] 
     Y = []
+    total_events = 0
     
     for f in filelist:
         print("    Reading file {}".format(f))
@@ -69,28 +70,20 @@ def getXY(filelist):
         for k in load_branches:
             table[k] = table_temp[k]
         
-        print(len(table['EcalScoringPlaneHits_v12.pdgID_'][0]))
-        print(len(table['TargetScoringPlaneHits_v12.pdgID_'][0]))
-
-        print('Starting selection')
-
-        for event in range(len(table["TargetScoringPlaneHits_v12.pdgID_"])):
+        print('    1. Primary Cut')
+        
+        # filter out non-fiducial/fiducial events
+        cut = np.zeros(len(table['EcalScoringPlaneHits_v12.pdgID_']), dtype=bool)
+        for event in range(len(table['EcalScoringPlaneHits_v12.pdgID_'])):
 
             fiducial = False
-
-            for hit in range(len(table["TargetScoringPlaneHits_v12.px_"][event])):
-                
-                # check if it's an electron with nonzero z-momentum
-                if ((table['TargetScoringPlaneHits_v12.pdgID_'][event][hit] == 11) and
-                   (table['TargetScoringPlaneHits_v12.trackID_'][event][hit] == 1) and 
-                   (table['TargetScoringPlaneHits_v12.z_'][event][hit] > -1.7535) and
-                   (table['TargetScoringPlaneHits_v12.z_'][event][hit] < 1.7535) and
-                   (table['TargetScoringPlaneHits_v12.pz_'][event][hit] > 0) and
-                   (table['EcalScoringPlaneHits_v12.pdgID_'][event][hit] == 11) and
+                        
+            for hit in range(len(table['EcalScoringPlaneHits_v12.pdgID_'][event])):
+                if ((table['EcalScoringPlaneHits_v12.pdgID_'][event][hit] == 11) and
                    (table['EcalScoringPlaneHits_v12.trackID_'][event][hit] == 1) and 
                    (table['EcalScoringPlaneHits_v12.z_'][event][hit] > 240) and
                    (table['EcalScoringPlaneHits_v12.z_'][event][hit] < 241) and
-                   (table['EcalScoringPlaneHits_v12.pz_'][event][hit] > 0)):
+                   (table['EcalScoringPlaneHits_v12.pz_'][event][hit] > 0)): 
 
                     recoilX = table['EcalScoringPlaneHits_v12.x_'][event][hit]
                     recoilY = table['EcalScoringPlaneHits_v12.y_'][event][hit]
@@ -98,7 +91,7 @@ def getXY(filelist):
                     recoilPy = table['EcalScoringPlaneHits_v12.py_'][event][hit]
                     recoilPz = table['EcalScoringPlaneHits_v12.pz_'][event][hit]
 
-                    # check for fiducial/non-fiducial
+                    # check if it's non-fiducial/fiducial
                     finalXY = (projectionX(recoilX,recoilY,EcalSP,recoilPx,recoilPy,recoilPz,EcalFace),projectionY(recoilX,recoilY,EcalSP,recoilPx,recoilPy,recoilPz,EcalFace))
                     if not recoilX == -9999 and not recoilY == -9999 and not recoilPx == -9999 and not recoilPy == -9999:
                         for cell in range(len(cells)):
@@ -106,30 +99,61 @@ def getXY(filelist):
                             if celldis <= cell_radius:
                                 fiducial = True
                                 break
+                    
+            if fiducial == True: # filter for non-fiducial/fiducial
+                cut[event] = 1
+            
+            if (event % 10000 == 0):
+                print('    Finished Event ' + str(event))
 
-            # plot the hit if it's non-fiducial        
-            if fiducial == False:
-                x_ = table['TargetScoringPlaneHits_v12.x_'][event][hit]
-                y_ = table['TargetScoringPlaneHits_v12.y_'][event][hit]
-                z_ = table['TargetScoringPlaneHits_v12.z_'][event][hit]
-                px_ = table['TargetScoringPlaneHits_v12.px_'][event][hit]
-                py_ = table['TargetScoringPlaneHits_v12.py_'][event][hit]                    
-                pz_ = table['TargetScoringPlaneHits_v12.pz_'][event][hit]
+        # perform the cut on the table values
+        for k in load_branches:
+            table[k] = table[k][cut]
+        
+        total_events += len(table['TargetScoringPlaneHits_v12.pdgID_'])
+       
+        print('     -> Finished.')
 
-                xFinal = projectionX(x_,y_,z_,px_,py_,pz_,EcalSP)
-                yFinal = projectionY(x_,y_,z_,px_,py_,pz_,EcalSP)
-                X.append(xFinal)
-                Y.append(yFinal)
+        print('    2. Retrieving XY values')
+        # plot the projected hits from Target
+        for event in range(len(table['TargetScoringPlaneHits_v12.pdgID_'])):
+
+            for hit in range(len(table['TargetScoringPlaneHits_v12.px_'][event])):
+                
+                # check if it's an electron with nonzero z-momentum
+                if ((table['TargetScoringPlaneHits_v12.pdgID_'][event][hit] == 11) and
+                   (table['TargetScoringPlaneHits_v12.trackID_'][event][hit] == 1) and 
+                   (table['TargetScoringPlaneHits_v12.z_'][event][hit] > -1.7535) and
+                   (table['TargetScoringPlaneHits_v12.z_'][event][hit] < 1.7535) and
+                   (table['TargetScoringPlaneHits_v12.pz_'][event][hit] > 0)):
+
+                    x_ = table['TargetScoringPlaneHits_v12.x_'][event][hit]
+                    y_ = table['TargetScoringPlaneHits_v12.y_'][event][hit]
+                    z_ = table['TargetScoringPlaneHits_v12.z_'][event][hit]
+                    px_ = table['TargetScoringPlaneHits_v12.px_'][event][hit]
+                    py_ = table['TargetScoringPlaneHits_v12.py_'][event][hit]                    
+                    pz_ = table['TargetScoringPlaneHits_v12.pz_'][event][hit]
+
+                    xFinal = projectionX(x_,y_,z_,px_,py_,pz_,EcalSP)
+                    yFinal = projectionY(x_,y_,z_,px_,py_,pz_,EcalSP)
+                    X.append(xFinal)
+                    Y.append(yFinal)
                 
             if (event % 10000 == 0):
-                print('Finished Event ' + str(event))
+                print('    Finished Event ' + str(event))
+        
+        print('    -> Finished.')
 
-    return X, Y
+    return X, Y, total_events
 
 if __name__ == '__main__':
     print('--- 2D Histogram Plotting Program ---')
     loadCellMap() # Load Cell Map
-    X_vals, Y_vals = getXY(files) # Get X and Y Values
+    X_vals, Y_vals, num = getXY(files) # Get X and Y Values
+    print()
+    print('=== General Info ===')
+    print('Total number of events: ' + str(num))
+    
     print("Done. Plotting...")
     my_cmap = copy.copy(plt.cm.get_cmap("jet"))
     my_cmap.set_under('white', 1)
@@ -139,4 +163,4 @@ if __name__ == '__main__':
     plt.xlabel('X (mm)')
     plt.ylabel('Y (mm)')
     plt.title('Projected ECal SP XY Hits from Target SP')
-    plt.savefig('/home/dgj1118/plotting/plots/EcalSPHits_Proj(NF).png') # Save Image
+    plt.savefig('/home/dgj1118/plotting/plots/EcalSPHits_Proj(F).png') # Save Image
