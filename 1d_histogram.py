@@ -40,10 +40,12 @@ def getANGLES(filelist):
             #    break
             
             for hit in range(10): #range(len(table['TargetScoringPlaneHits_v12.z_'][event])):
+                
                 if (table['TargetScoringPlaneHits_v12.z_'][event][hit] > -1.7535 and \
                 table['TargetScoringPlaneHits_v12.z_'][event][hit] < 1.7535 and \
                 table['TargetScoringPlaneHits_v12.trackID_'][event][hit] == 1 and \
                 table['TargetScoringPlaneHits_v12.pdgID_'][event][hit] == 11):
+                    
                     # Calculate recoil angle (in degrees)
                     X = table['TargetScoringPlaneHits_v12.x_'][event][hit]
                     Y = table['TargetScoringPlaneHits_v12.y_'][event][hit]
