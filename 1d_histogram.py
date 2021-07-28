@@ -162,4 +162,5 @@ if __name__ == '__main__':
     plt.hist(vals, bins=bin_list, range=(0,11))
     plt.xlabel('Recoil Angles (degrees)')
     plt.title('Magnitude of Recoil Angles at Target SP (nonfiducial)')
-    plt.savefig('/home/dgj1118/plotting/plots/TargetSP_Angles(NF1).png')
+    plt.savefig('/home/dgj1118/plotting/plots/TargetSP_Angles(NF1).png') # Save Image
+    

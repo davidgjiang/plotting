@@ -153,7 +153,7 @@ if __name__ == '__main__':
     print()
     print('=== General Info ===')
     print('Total number of events: ' + str(num))
-    
+
     print("Done. Plotting...")
     my_cmap = copy.copy(plt.cm.get_cmap("jet"))
     my_cmap.set_under('white', 1)
@@ -162,5 +162,5 @@ if __name__ == '__main__':
     plt.colorbar()
     plt.xlabel('X (mm)')
     plt.ylabel('Y (mm)')
-    plt.title('Projected ECal SP XY Hits from Target SP')
-    plt.savefig('/home/dgj1118/plotting/plots/EcalSPHits_Proj(F).png') # Save Image
+    plt.title('Projected Ecal SP Hits from Target SP (nonfiducial)')
+    plt.savefig('/home/dgj1118/plotting/plots/EcalSPHits_Proj(NF).png') # Save Image
