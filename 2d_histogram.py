@@ -61,7 +61,7 @@ def getXY(filelist):
     total_events = 0
     
     for f in filelist:
-        print("    Reading file {}".format(f))
+        print("    File: {}".format(f))
         t = uproot.open(f)['LDMX_Events']
         if len(t.keys()) == 0:
             print("    File empty, skipping")
@@ -162,5 +162,5 @@ if __name__ == '__main__':
     plt.colorbar()
     plt.xlabel('X (mm)')
     plt.ylabel('Y (mm)')
-    plt.title('Projected Ecal SP Hits from Target SP (nonfiducial)')
-    plt.savefig('/home/dgj1118/plotting/plots/EcalSPHits_Proj(NF).png') # Save Image
+    plt.title('Projected Ecal SP Hits from Target SP (fiducial)')
+    plt.savefig('/home/dgj1118/plotting/plots/EcalSPHits_Proj(F).png') # Save Image

@@ -99,7 +99,7 @@ def getANGLES(filelist):
                                 fiducial = True
                                 break
                     
-            if fiducial == False: # filter for non-fiducial/fiducial
+            if fiducial == True: # filter for non-fiducial/fiducial
                 cut[event] = 1
             
             if (event % 10000 == 0):
@@ -109,8 +109,6 @@ def getANGLES(filelist):
         for k in load_branches:
             table[k] = table[k][cut]
         
-        total_events += len(table['TargetScoringPlaneHits_v12.pdgID_'])
-
         print('     -> Finished.')
               
         print('    2. Retrieving angles')
@@ -156,11 +154,11 @@ if __name__ == '__main__':
     print('Maximum recoil angle: ' + str(max(vals)))
     print('Minimum recoil angle: ' + str(min(vals)))   
 
-    bin_list = np.linspace(0,11,1100)
+    bin_list = np.linspace(0,1.5,150)
     print("Done. Plotting...")
     plt.figure()
-    plt.hist(vals, bins=bin_list, range=(0,11))
+    plt.hist(vals, bins=bin_list, range=(0,1.5))
     plt.xlabel('Recoil Angles (degrees)')
-    plt.title('Magnitude of Recoil Angles at Target SP (nonfiducial)')
-    plt.savefig('/home/dgj1118/plotting/plots/TargetSP_Angles(NF1).png') # Save Image
-    
+    plt.title('Magnitude of Recoil Angles at Target SP (fiducial)')
+    plt.savefig('/home/dgj1118/plotting/plots/TargetSP_Angles(F2).png') # Save Image
+
