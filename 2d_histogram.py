@@ -87,12 +87,13 @@ def getXY(filelist):
 
                     recoilX = table['EcalScoringPlaneHits_v12.x_'][event][hit]
                     recoilY = table['EcalScoringPlaneHits_v12.y_'][event][hit]
+                    recoilZ = table['EcalScoringPlaneHits_v12.z_'][event][hit]
                     recoilPx = table['EcalScoringPlaneHits_v12.px_'][event][hit]
                     recoilPy = table['EcalScoringPlaneHits_v12.py_'][event][hit]
                     recoilPz = table['EcalScoringPlaneHits_v12.pz_'][event][hit]
 
                     # check if it's non-fiducial/fiducial
-                    finalXY = (projectionX(recoilX,recoilY,EcalSP,recoilPx,recoilPy,recoilPz,EcalFace),projectionY(recoilX,recoilY,EcalSP,recoilPx,recoilPy,recoilPz,EcalFace))
+                    finalXY = (projectionX(recoilX,recoilY,recoilZ,recoilPx,recoilPy,recoilPz,EcalFace),projectionY(recoilX,recoilY,recoilZ,recoilPx,recoilPy,recoilPz,EcalFace))
                     if not recoilX == -9999 and not recoilY == -9999 and not recoilPx == -9999 and not recoilPy == -9999:
                         for cell in range(len(cells)):
                             celldis = dist(cells[cell], finalXY)
