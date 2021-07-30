@@ -20,8 +20,8 @@ load_branches = ['TargetScoringPlaneHits_v12.x_', 'TargetScoringPlaneHits_v12.y_
  'EcalScoringPlaneHits_v12.py_', 'EcalScoringPlaneHits_v12.pz_', 
  'EcalScoringPlaneHits_v12.trackID_', 'EcalScoringPlaneHits_v12.pdgID_']
 
-# Constants
-EcalSP = 240.5015
+# Constants (mm)
+EcalSP = 240.5005
 EcalFace = 248.35
 cell_radius = 5.0
 
@@ -68,7 +68,7 @@ def getANGLES(filelist):
         table = {}
         for k in load_branches:
             table[k] = table_temp[k]
-
+        
         print('    1. Primary Cut')
         
         # filter out non-fiducial/fiducial events
@@ -80,18 +80,19 @@ def getANGLES(filelist):
             for hit in range(len(table['EcalScoringPlaneHits_v12.pdgID_'][event])):
                 if ((table['EcalScoringPlaneHits_v12.pdgID_'][event][hit] == 11) and
                    (table['EcalScoringPlaneHits_v12.trackID_'][event][hit] == 1) and 
-                   (table['EcalScoringPlaneHits_v12.z_'][event][hit] > 240) and
-                   (table['EcalScoringPlaneHits_v12.z_'][event][hit] < 241) and
+                   (table['EcalScoringPlaneHits_v12.z_'][event][hit] > 240.500) and
+                   (table['EcalScoringPlaneHits_v12.z_'][event][hit] < 240.501) and
                    (table['EcalScoringPlaneHits_v12.pz_'][event][hit] > 0)): 
 
                     recoilX = table['EcalScoringPlaneHits_v12.x_'][event][hit]
                     recoilY = table['EcalScoringPlaneHits_v12.y_'][event][hit]
+                    recoilZ = table['EcalScoringPlaneHits_v12.z_'][event][hit]
                     recoilPx = table['EcalScoringPlaneHits_v12.px_'][event][hit]
                     recoilPy = table['EcalScoringPlaneHits_v12.py_'][event][hit]
                     recoilPz = table['EcalScoringPlaneHits_v12.pz_'][event][hit]
 
                     # check if it's non-fiducial/fiducial
-                    finalXY = (projectionX(recoilX,recoilY,EcalSP,recoilPx,recoilPy,recoilPz,EcalFace),projectionY(recoilX,recoilY,EcalSP,recoilPx,recoilPy,recoilPz,EcalFace))
+                    finalXY = (projectionX(recoilX,recoilY,recoilZ,recoilPx,recoilPy,recoilPz,EcalFace),projectionY(recoilX,recoilY,recoilZ,recoilPx,recoilPy,recoilPz,EcalFace))
                     if not recoilX == -9999 and not recoilY == -9999 and not recoilPx == -9999 and not recoilPy == -9999:
                         for cell in range(len(cells)):
                             celldis = dist(cells[cell], finalXY)
@@ -99,7 +100,7 @@ def getANGLES(filelist):
                                 fiducial = True
                                 break
                     
-            if fiducial == True: # filter for non-fiducial/fiducial
+            if fiducial == False: # filter for non-fiducial/fiducial
                 cut[event] = 1
             
             if (event % 10000 == 0):
@@ -112,16 +113,16 @@ def getANGLES(filelist):
         print('     -> Finished.')
               
         print('    2. Retrieving angles')
-
+        
         total_events += len(table['TargetScoringPlaneHits_v12.z_'])
 
         for event in range(len(table['TargetScoringPlaneHits_v12.z_'])):
             
             for hit in range(len(table['TargetScoringPlaneHits_v12.z_'][event])):
                 
-                if (table['TargetScoringPlaneHits_v12.z_'][event][hit] > -1.7535 and \
-                table['TargetScoringPlaneHits_v12.z_'][event][hit] < 1.7535 and \
-                table['TargetScoringPlaneHits_v12.trackID_'][event][hit] == 1 and \
+                if (table['TargetScoringPlaneHits_v12.z_'][event][hit] < 0.1777 and
+                table['TargetScoringPlaneHits_v12.z_'][event][hit] > 0.1757 and
+                table['TargetScoringPlaneHits_v12.trackID_'][event][hit] == 1 and
                 table['TargetScoringPlaneHits_v12.pdgID_'][event][hit] == 11):
                     
                     # Position and Momentum values
@@ -134,14 +135,14 @@ def getANGLES(filelist):
                     
                     # Calculate recoil angle (in degrees)
                     theta = abs(np.arccos(pZ / np.sqrt(pX**2 + pY**2 + pZ**2)) * 180 / np.pi)
-                    Angles.append(theta)
+                    Angles.append(theta)                    
                     break
     
             if (event % 10000 == 0):
                 print('        Finished loading event number ' + str(event))
         
         print('    -> Finished.')
-            
+
     return Angles, total_events
 
 if __name__ == '__main__':  
@@ -154,11 +155,11 @@ if __name__ == '__main__':
     print('Maximum recoil angle: ' + str(max(vals)))
     print('Minimum recoil angle: ' + str(min(vals)))   
 
-    bin_list = np.linspace(0,1.5,150)
+    bin_list = np.linspace(0,20,2000)
     print("Done. Plotting...")
     plt.figure()
-    plt.hist(vals, bins=bin_list, range=(0,1.5))
+    plt.hist(vals, bins=bin_list, range=(0,20))
     plt.xlabel('Recoil Angles (degrees)')
-    plt.title('Magnitude of Recoil Angles at Target SP (fiducial)')
-    plt.savefig('/home/dgj1118/plotting/plots/TargetSP_Angles(F2).png') # Save Image
+    plt.title('Recoil Angles at Back Target SP (Nonfiducial)')
+    plt.savefig('/home/dgj1118/plotting/plots/TargetSP_Angles(NF2).png') # Save Image
 

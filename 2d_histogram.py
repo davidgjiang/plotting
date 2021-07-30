@@ -21,7 +21,7 @@ load_branches = ['TargetScoringPlaneHits_v12.x_', 'TargetScoringPlaneHits_v12.y_
  'EcalScoringPlaneHits_v12.trackID_', 'EcalScoringPlaneHits_v12.pdgID_']
 
 # Constants
-EcalSP = 240.5015
+EcalSP = 240.5005
 EcalFace = 248.35
 cell_radius = 5.0
 
@@ -100,7 +100,7 @@ def getXY(filelist):
                                 fiducial = True
                                 break
                     
-            if fiducial == True: # filter for non-fiducial/fiducial
+            if fiducial == False: # filter for non-fiducial/fiducial
                 cut[event] = 1
             
             if (event % 10000 == 0):
@@ -123,8 +123,8 @@ def getXY(filelist):
                 # check if it's an electron with nonzero z-momentum
                 if ((table['TargetScoringPlaneHits_v12.pdgID_'][event][hit] == 11) and
                    (table['TargetScoringPlaneHits_v12.trackID_'][event][hit] == 1) and 
-                   (table['TargetScoringPlaneHits_v12.z_'][event][hit] > -1.7535) and
-                   (table['TargetScoringPlaneHits_v12.z_'][event][hit] < 1.7535) and
+                   (table['TargetScoringPlaneHits_v12.z_'][event][hit] > 0.1757) and
+                   (table['TargetScoringPlaneHits_v12.z_'][event][hit] < 0.1777) and
                    (table['TargetScoringPlaneHits_v12.pz_'][event][hit] > 0)):
 
                     x_ = table['TargetScoringPlaneHits_v12.x_'][event][hit]
@@ -162,5 +162,5 @@ if __name__ == '__main__':
     plt.colorbar()
     plt.xlabel('X (mm)')
     plt.ylabel('Y (mm)')
-    plt.title('Projected Ecal SP Hits from Target SP (fiducial)')
-    plt.savefig('/home/dgj1118/plotting/plots/EcalSPHits_Proj(F).png') # Save Image
+    plt.title('Projected Ecal SP Hits from Target SP (Nonfiducial)')
+    plt.savefig('/home/dgj1118/plotting/plots/EcalSPHits_Proj(NF).png') # Save Image
