@@ -1,1 +1,1 @@
-Scripts for plotting histograms and distributions
+Scripts for plotting histograms and ROC curves.
