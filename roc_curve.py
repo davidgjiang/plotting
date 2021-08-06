@@ -217,18 +217,31 @@ if __name__ == '__main__':
     print('--- ROC Curve Plotting Program ---')
     loadCellMap() # Load Cell Map
     nf_vals, f_vals, nf_num, f_num = getANGLES(files) # Get Recoil Angles
+    
+    # Print out details of events
     print()
     print('=== General Info ===')
     print('Total number of events: ' + str(nf_num + f_num))
     print('Total number of nonfiducial events: ' + str(nf_num))
     print('Total number of fiducial events: ' + str(f_num))
+
+    # get True/False positive rate values and find the cut for the best ratio
     x_vals = []
     y_vals = []
+    max_ratio = 0
+    cut_value = 0
     for i in np.linspace(0,85,8500):
-        x,y = getXYROC(nf_vals, f_vals, i) # get True/False Positive Rate values
+        x,y = getXYROC(nf_vals, f_vals, i) 
         x_vals.append(x)
-        y_vals.append(y)    
-    plt.figure() # Plot the ROC curve
+        y_vals.append(y)
+        if (x != 0 and y/x > max_ratio):
+            cut_value = i
+            max_ratio = y/x    
+    print('The max ratio of True Positive Rate/False Positive Rate is: ' + str(max_ratio))
+    print('The best recoil angle cut value is: ' + str(cut_value) + ' degrees')
+    
+    # Plot the ROC curve
+    plt.figure() 
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
     plt.title('Signal Efficiency for Electron Recoil Angle')
