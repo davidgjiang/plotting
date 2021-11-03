@@ -2,6 +2,18 @@ from LDMX.Framework import EventTree
 import sys
 import numpy as np
 
+'''
+In order to test the efficiency of my Non-Fiducial filter, I need to compare the amount of non-fiducial events created from sample generation to the amount of 
+non-fiducial events calculated through projection onto the ECal Face.
+
+To do this, I must check the tags of each event. The Non-fiducial filter tags every fiducial event with a 1. If the event is tagged, I will perform an additional 
+check to see if it is a non-fiducial event through projecting its path from the ECal Scoring Plane to the ECal Face. If the X-Y position of the projection is not
+within 5 mm of any of the ECal Face's cell centers, this tagged fiducial event is marked non-fiducial.
+
+Next, I want to see if this non-fiducial event that was left out by the filter leaves a signal inside the ECal. In order to achieve this, I want to access the 
+EcalSimHits branch of my event, and select the hit that is the primary recoil electron (pdg id = 11 and track id = 1). After that, I can check the value of the 
+energy deposited in the ECal. If there is no output, that means that the primary recoil electron did not enter the ECal, deeming it as non-fiducial.
+'''
 
 tree = EventTree.EventTree(sys.argv[1])                                         # tree = all of the events
 total = 0                                                                       # total number of events
@@ -70,13 +82,14 @@ for event in tree:                                                              
 
                 # make sure the x and y coordinates and momenta are not marked as -9999 (this value is set for missed hits)
                 if not X == -9999 and not Y == -9999 and not Px == -9999 and not Py == -9999:
+                    
                     for cell in range(len(cells)):                              # loop through each cell on the ECal Face
                         celldis = dist(cells[cell], finalXY)                    # calculate the distance from the cell center to the projected x-y coordinate
                         if celldis <= cell_radius:                              # if the distance from the cell center is within the cell radius the event is fiducial
                             fiducial = True
                             break                                               # stop looping over the cells
 
-        if (fiducial == False):
+        if (fiducial == False):                                                 
             leftovers += 1                                                      # increment the amount of fiducial events from the filter -> non-fiducial after calculation
             
             for hit2 in event.EcalSimHits:                                      # loop over every hit in EcalSimHits
