@@ -2,19 +2,6 @@ from LDMX.Framework import EventTree
 import sys
 import numpy as np
 
-'''
-In order to test the efficiency of my Non-Fiducial filter, I need to compare the amount of non-fiducial events created from sample generation to the amount of 
-non-fiducial events calculated through projection onto the ECal Face.
-
-To do this, I must check the tags of each event. The Non-fiducial filter tags every fiducial event with a 1. If the event is tagged, I will perform an additional 
-check to see if it is a non-fiducial event through projecting its path from the ECal Scoring Plane to the ECal Face. If the X-Y position of the projection is not
-within 5 mm of any of the ECal Face's cell centers, this tagged fiducial event is marked non-fiducial.
-
-Next, I want to see if this non-fiducial event that was left out by the filter leaves a signal inside the ECal. In order to achieve this, I want to access the 
-EcalSimHits branch of my event, and select the hit that is the primary recoil electron (pdg id = 11 and track id = 1). After that, I can check the value of the 
-energy deposited in the ECal. If there is no output, that means that the primary recoil electron did not enter the ECal, deeming it as non-fiducial.
-'''
-
 tree = EventTree.EventTree(sys.argv[1])                                         # tree = all of the events
 total = 0                                                                       # total number of events
 fiducials = 0                                                                   # total number of fiducial events
@@ -27,13 +14,13 @@ EcalFace = 248.35                                                               
 cell_radius = 5.0                                                               # radius of a single ECal cell module
 
 # important functions 
-def projectionX(x,y,z,px,py,pz,zFinal):                                         # x projection from ECal SP to ECal Face
+def projectionX(x,y,z,px,py,pz,zFinal):                                         # x projection from z to zFinal
     if (px == 0):
         return x + (zFinal - z)/99999
     else:
         return x + px/pz*(zFinal - z)
 
-def projectionY(x,y,z,px,py,pz,zFinal):                                         # y projection from ECal SP to ECal Face
+def projectionY(x,y,z,px,py,pz,zFinal):                                         # y projection from z to zFinal
     if (py == 0):
         return y + (zFinal - z)/99999
     else:
@@ -50,9 +37,29 @@ def loadCellMap():                                                              
     cells = np.array(list(cellMap.values()))
     print("Loaded detector info")
 
-############################################################################################################################################################################
+def loadLayers():                                                               # load all the z-positions of each layer of the ECal
+    layerMap = {}
+    for i, x in np.loadtxt('layer.txt'):
+        layerMap[i] = x
+    global layers
+    layers = np.array(list(layerMap.values()))
+    print("Loaded layer info")
+
+def loadRadii():                                                                # load all the radii of containment at each layer of the ECal
+    radiiVals = {}
+    for i, x in np.loadtxt('radii.txt'):
+        radiiVals[i] = x 
+        global radii
+        radii = np.array(list(radiiVals.values()))
+        print("Loaded Radii of Containment")
+
+####################################################################################################################################################################################################################################################################
 
 loadCellMap()                                                                   # load the cell map -> 'cells' is the global variable for the values
+
+loadLayers()                                                                    # load the layer values -> 'layers' is the global variable for the values
+
+loadRadii()                                                                     # load the radii of containment -> 'radii' is the global varaible for the values
 
 for event in tree:                                                              # loop through each event in the root file
     total += 1                                                                  # increment each event by 1
@@ -91,7 +98,47 @@ for event in tree:                                                              
 
         if (fiducial == False):                                                 
             leftovers += 1                                                      # increment the amount of fiducial events from the filter -> non-fiducial after calculation
-            
+            electronLayerIntercepts = []                                        # store the primary electron's layer intercepts
+            energies = []                                                       # store the energies of each hit 
+            amplitudes = []                                                     # store the amplitudes of each hit
+
+            for hit in event.EcalScoringPlaneHits:                              # loop through each hit in the event
+                
+                pdgID = hit.getPdgID()                                          # pdg id
+                trackID = hit.getTrackID()                                      # track id
+                Z = hit.getPosition()[2]                                        # z position
+                Pz = hit.getMomentum()[2]                                       # z momentum
+
+                if (pdgID == 11 and trackID == 1 and Z > 240.500 and Z < 240.501 and Pz > 0):           # start from the ECal SP: 
+                    X = hit.getPosition()[0]                                                            # x position of the hit
+                    Y = hit.getPosition()[1]                                                            # y position of the hit
+                    Px = hit.getMomentum()[0]                                                           # x momentum of the hit
+                    Py = hit.getMomentum()[1]                                                           # y momentum of the hit
+                        
+                    for i in range(len(layers)):                                                                            # loop through each layer of the ECal
+                        zInitial = Z                                                                                        # initial z position is at the ECal SP ~240.5 mm
+                        zFinal = layers[i]                                                                                  # final z position will increment to the next layer each time
+                        xyFinal = (projectionX(X,Y,zInitial,Px,Py,Pz,zFinal),projectionX(X,Y,zInitial,Px,Py,Pz,zFinal))     # x-y position at the final z position (projected from ECal SP)
+                        electronLayerIntercepts.append(xyFinal)                                                             # add the x-y position to the electronLayerIntercepts list
+
+            for hit in event.EcalRecHits:                                                                                   # loop through each hit in the event
+                zPos = hit.getZPos()                                                                                        # z position of the hit
+
+                for i in range(len(layers)):                                                                                # loop through each layer
+                    
+                    if (zPos > (layers[i] - 0.005) and zPos < (layers[i] + 0.005)):                                         # select the event that appears in the ith layer
+                        xPos = hit.getXPos()                                                                                # x position of the hit
+                        yPos = hit.getYPos()                                                                                # y position of the hit
+                        xyPos = (xPos,yPos)                                                                                 # (x,y) coordinate of the hit
+                        
+                        if (dist(xyPos,electronLayerIntercepts[i]) <= radii[i]):                                            # check if the hit is within the radius of containment for that layer w.r.t the electron (x,y) coordinate
+                            energy = hit.getEnergy()                                                                        # energy of the hit
+                            amplitude = hit.getAmplitude()                                                                  # amplitude of the hit
+                            energies.append(energy)
+                            amplitudes.append(amplitude)
+
+
+            '''
             for hit2 in event.EcalSimHits:                                      # loop over every hit in EcalSimHits
                 contrib = hit2.getContrib(0)                                    # contrib of the hit
                 trackid = contrib.trackID                                       # track id of the hit
@@ -102,6 +149,7 @@ for event in tree:                                                              
                     print("pdg id: " + str(pdgid))
                     eDep = hit2.getEdep()                                       # calculate the energy deposited in the ECal
                     print("Energy deposited in the ECal: " + str(eDep))         
+            '''
 
     elif (is_fiducial != 1):                                                    # if the event is non-fiducial...
         nonfiducials += 1                                                       # increment the non-fiducial count by 1
@@ -111,5 +159,3 @@ print("Total number of events: " + str(total))
 print("Total number of fiducial events: " + str(fiducials))
 print("Total number of non-fiducial events: " + str(nonfiducials))
 print("Total number of fiducial events from filter but non-fiducial from calculation: " + str(leftovers))
-
-
